@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="fr">
+<!-- Firebase App (the core Firebase SDK) -->
+<script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-firestore-compat.js"></script>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "...",
+    authDomain: "...",
+    projectId: "...",
+    storageBucket: "...",
+    messagingSenderId: "...",
+    appId: "..."
+  };
+</script>
+<head>
+<meta charset="UTF-8">
+<title>Examen de Vue – ATOUT POINT DE VUE</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+:root {
+  --main: #0f3b44;
+  --accent: #16a34a;
+  --bg: #f5f7fb;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: var(--bg);
+  margin: 0;
+  padding: 20px;
+}
+
+.card {
+  background: white;
+  border-radius: 20px;
+  padding: 24px;
+  max-width: 1100px;
+  margin: auto;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.logo {
+  width: 90px;
+  height: 90px;
+  border-radius: 16px;
+  border: 2px solid var(--main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+}
+
+h1 { margin: 0; color: var(--main); }
+
+label {
+  font-weight: bold;
+  display: block;
+  margin-top: 10px;
+}
+
+input, textarea {
+  width: 100%;
+  padding: 12px;
+  margin-top: 6px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+button {
+  flex: 1;
+  padding: 14px;
+  border-radius: 14px;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.save { background: var(--main); color: white; }
+.print { background: var(--accent); color: white; }
+.logout { background: #dc2626; color: white; }
+
+.history {
+  margin-top: 20px;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 10px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.item {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+}
+.item:hover { background: #f1f5f9; }
+
+.login {
+  max-width: 400px;
+  margin: 100px auto;
+  background: white;
+  padding: 30px;
+  border-radius: 20px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+.search {
+  margin-bottom: 10px;
+}
+
+canvas {
+  border: 2px dashed #999;
+  border-radius: 10px;
+  margin-top: 10px;
+}
+
+@media print {
+  body { background: white; }
+  .buttons, .history, .search, .logout { display: none; }
+  .card { box-shadow: none; }
+}
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN -->
+<div id="loginBox" class="login">
+  <h2>Connexion Opticien</h2>
+  <label>Nom</label>
+  <input id="loginName">
+  <label>Mot de passe</label>
+  <input id="loginPass" type="password">
+  <button class="save" onclick="login()">Se connecter</button>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none" class="card">
+
+  <div class="header">
+    <div class="logo">
+      <img src="logo.jpg" alt="Atout Point de Vue"
+           style="max-width:100%; max-height:100%; object-fit:contain;">
+    </div>
+    <div>
+      <h1>Examen de Vue — ATOUT POINT DE VUE</h1>
+      <div id="date"></div>
+    </div>
+  </div>
+
+  <button class="logout" onclick="logout()">Déconnexion</button>
+
+  <label>Nom de l'opticien</label>
+  <input id="opticien" readonly>
+
+  <label>Nom du client</label>
+  <input id="client">
+
+  <label>Âge</label>
+  <input id="age">
+
+  <label>Motif de consultation</label>
+  <textarea id="motif"></textarea>
+
+  <h3>Anamnèse</h3>
+  <label><input type="checkbox" id="sympFlouLoin"> Vision floue loin</label>
+  <label><input type="checkbox" id="sympFlouPres"> Vision floue près</label>
+  <label><input type="checkbox" id="sympFatigue"> Fatigue / maux de tête</label>
+  <label><input type="checkbox" id="sympEblou"> Éblouissement / nuit</label>
+  <label><input type="checkbox" id="sympSec"> Sécheresse oculaire</label>
+
+  <label>Commentaires</label>
+  <textarea id="anamComment"></textarea>
+
+  <h3>Auto-réfraction</h3>
+  <div class="grid">
+    <input id="odS" placeholder="OD Sph">
+    <input id="odC" placeholder="OD Cyl">
+    <input id="odA" placeholder="OD Axe">
+    <input id="ogS" placeholder="OG Sph">
+    <input id="ogC" placeholder="OG Cyl">
+    <input id="ogA" placeholder="OG Axe">
+  </div>
+
+  <h3>Résultat final</h3>
+  <div class="grid">
+    <input id="odF" placeholder="OD Final">
+    <input id="ogF" placeholder="OG Final">
+    <input id="add" placeholder="ADD">
+  </div>
+
+  <label>Conseil optique</label>
+  <textarea id="conseil"></textarea>
+
+  <h3>Signature client</h3>
+  <canvas id="signature" width="500" height="150"></canvas>
+  <button onclick="clearSig()">Effacer signature</button>
+
+  <div class="buttons">
+    <button class="save" onclick="saveClient()">💾 Sauvegarder</button>
+    <button class="print" onclick="printPage()">🖨️ Imprimer / PDF</button>
+  </div>
+
+  <h3>Recherche client</h3>
+  <input class="search" id="search" placeholder="Rechercher par nom" oninput="renderHistory()">
+
+  <h3>Historique</h3>
+  <div class="history" id="history"></div>
+
+</div>
+
+<script>
+// DATE
+document.getElementById("date").innerText = new Date().toLocaleString();
+
+// LOGIN
+function login() {
+  if(!loginName.value || !loginPass.value) {
+    alert("Veuillez entrer nom et mot de passe");
+    return;
+  }
+  localStorage.setItem("user", loginName.value);
+  document.getElementById("loginBox").style.display = "none";
+  document.getElementById("app").style.display = "block";
+  opticien.value = loginName.value;
+}
+
+function logout() {
+  localStorage.removeItem("user");
+  location.reload();
+}
+
+// SIGNATURE
+const canvas = document.getElementById("signature");
+const ctx = canvas.getContext("2d");
+let drawing = false;
+
+canvas.addEventListener("mousedown", () => drawing = true);
+canvas.addEventListener("mouseup", () => {
+  drawing = false;
+  ctx.beginPath();
+});
+canvas.addEventListener("mousemove", draw);
+
+function draw(e) {
+  if(!drawing) return;
+  ctx.lineWidth = 2;
+  ctx.lineCap = "round";
+  ctx.strokeStyle = "#000";
+  ctx.lineTo(e.offsetX, e.offsetY);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(e.offsetX, e.offsetY);
+}
+
+function clearSig() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+}
+
+// CLIENTS
+function saveClient() {
+  const data = {
+    date: new Date().toLocaleString(),
+    opticien: opticien.value,
+    client: client.value,
+    age: age.value,
+    motif: motif.value,
+    od: odF.value,
+    og: ogF.value,
+    add: add.value,
+    conseil: conseil.value
+  };
+
+  let list = JSON.parse(localStorage.getItem("clients") || "[]");
+  list.unshift(data);
+  localStorage.setItem("clients", JSON.stringify(list));
+
+  renderHistory();
+  alert("Client sauvegardé");
+}
+
+function renderHistory() {
+  const h = document.getElementById("history");
+  h.innerHTML = "";
+  const filter = document.getElementById("search").value.toLowerCase();
+
+  const list = JSON.parse(localStorage.getItem("clients") || "[]");
+
+  list.filter(c => c.client.toLowerCase().includes(filter))
+      .forEach((c, index) => {
+        const div = document.createElement("div");
+        div.className = "item";
+        div.innerText = `${c.date} — ${c.client} (${c.opticien})`;
+        div.onclick = () => loadClient(index);
+        h.appendChild(div);
+      });
+}
+
+function loadClient(index) {
+  const list = JSON.parse(localStorage.getItem("clients") || "[]");
+  const c = list[index];
+
+  client.value = c.client;
+  age.value = c.age;
+  motif.value = c.motif;
+  odF.value = c.od;
+  ogF.value = c.og;
+  add.value = c.add;
+  conseil.value = c.conseil;
+}
+
+// IMPRESSION
+function printPage() {
+  try {
+    window.focus();
+    window.print();
+  } catch {
+    alert("Utilisez le menu du navigateur → Imprimer");
+  }
+}
+
+// AUTO LOGIN
+const savedUser = localStorage.getItem("user");
+if(savedUser) {
+  document.getElementById("loginBox").style.display = "none";
+  document.getElementById("app").style.display = "block";
+  opticien.value = savedUser;
+}
+
+renderHistory();
+</script>
+
+
+</body>
+</html>
